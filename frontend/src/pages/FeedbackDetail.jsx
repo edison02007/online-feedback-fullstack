@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { API_URL } from '../config';
 
 const TYPE_ICON = { general: '💬', bug: '🐛', suggestion: '💡', compliment: '⭐' };
 const BADGE = { general: 'badge-general', bug: 'badge-bug', suggestion: 'badge-suggestion', compliment: 'badge-compliment' };
@@ -8,38 +7,9 @@ const BADGE = { general: 'badge-general', bug: 'badge-bug', suggestion: 'badge-s
 export default function FeedbackDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [fb, setFb] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const feedbacks = JSON.parse(localStorage.getItem('feedbacks') || '[]');
+  const fb = feedbacks.find(f => String(f.id) === id);
 
-  // ✅ Fetch from backend instead of localStorage
-  useEffect(() => {
-    const fetchFeedback = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/feedback/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch");
-
-        const data = await res.json();
-        setFb(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFeedback();
-  }, [id]);
-
-  // ⏳ Loading state
-  if (loading) {
-    return (
-      <div className="page" style={{ textAlign: 'center', paddingTop: '60px' }}>
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  // ❌ Not found
   if (!fb) return (
     <div className="page" style={{ textAlign: 'center', paddingTop: '60px' }}>
       <div style={{ fontSize: '48px' }}>🔍</div>
@@ -68,9 +38,8 @@ export default function FeedbackDetail() {
         <div className="detail-meta">
           <div className="meta-item">
             <span className="meta-label">📅 Submitted</span>
-            <span>{new Date(fb.created_at).toLocaleString()}</span>
+            <span>{new Date(fb.date).toLocaleString()}</span>
           </div>
-
           <div className="meta-item">
             <span className="meta-label">⭐ Rating</span>
             <span className="detail-stars">
@@ -82,18 +51,14 @@ export default function FeedbackDetail() {
               </span>
             </span>
           </div>
-
           {fb.tags?.length > 0 && (
             <div className="meta-item">
               <span className="meta-label">🏷️ Tags</span>
               <div className="tag-group">
-                {fb.tags.map(tag => (
-                  <span key={tag} className="tag-btn tag-active">{tag}</span>
-                ))}
+                {fb.tags.map(tag => <span key={tag} className="tag-btn tag-active">{tag}</span>)}
               </div>
             </div>
           )}
-
           {fb.file && (
             <div className="meta-item">
               <span className="meta-label">📎 Attachment</span>
